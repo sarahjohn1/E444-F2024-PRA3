@@ -87,6 +87,7 @@ def test_delete_message(client):
     data = json.loads(rv.data)
     assert data["status"] == 1
 
+
 def test_search_functionality(client):
     """Creates a post and then checks for it"""
     login(client, app.config["USERNAME"], app.config["PASSWORD"])
@@ -106,6 +107,7 @@ def test_search_functionality(client):
     rv = client.get("/search/?query=one", content_type="html/text")
     assert rv.status_code == 200
 
+
 def test_login_todelete(client):
     """Creates a post and then tries to delete it"""
     login(client, app.config["USERNAME"], app.config["PASSWORD"])
@@ -121,6 +123,4 @@ def test_login_todelete(client):
     logout(client)
     """tries to delete"""
     rv = client.get("/delete/1")
-    data = json.loads(rv.data)
     assert b"log in" in rv.data
-
