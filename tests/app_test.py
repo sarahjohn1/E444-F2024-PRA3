@@ -1,6 +1,7 @@
-import pytest
-from pathlib import Path
 import json
+from pathlib import Path
+
+import pytest
 
 from project.app import app, db
 
@@ -63,6 +64,19 @@ def test_login_logout(client):
     assert b"Invalid password" in rv.data
 
 
+def test_messages(client):
+    """Ensure that user can post messages"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.post(
+        "/add",
+        data=dict(title="<Hello>", text="<strong>HTML</strong> allowed here"),
+        follow_redirects=True,
+    )
+    assert b"No entries here so far" not in rv.data
+    assert b"&lt;Hello&gt;" in rv.data
+    assert b"<strong>HTML</strong> allowed here" in rv.data
+
+
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
     rv = client.get("/delete/1")
@@ -72,3 +86,41 @@ def test_delete_message(client):
     rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
+
+def test_search_functionality(client):
+    """Creates a post and then checks for it"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.post(
+        "/add",
+        data=dict(title="<One>", text="<strong>HTML</strong> allowed here"),
+        follow_redirects=True,
+    )
+    assert b"No entries here so far" not in rv.data
+    assert b"&lt;One&gt;" in rv.data
+    assert b"<strong>HTML</strong> allowed here" in rv.data
+    """Search for messages"""
+    rv = client.get("/search/?query=one", content_type="html/text")
+    assert rv.status_code == 200
+    """logs out and then checks if it exists"""
+    logout(client)
+    rv = client.get("/search/?query=one", content_type="html/text")
+    assert rv.status_code == 200
+
+def test_login_todelete(client):
+    """Creates a post and then tries to delete it"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.post(
+        "/add",
+        data=dict(title="<Three>", text="<strong>HTML</strong> allowed here"),
+        follow_redirects=True,
+    )
+    assert b"No entries here so far" not in rv.data
+    assert b"&lt;Three&gt;" in rv.data
+    assert b"<strong>HTML</strong> allowed here" in rv.data
+    """logs out"""
+    logout(client)
+    """tries to delete"""
+    rv = client.get("/delete/1")
+    data = json.loads(rv.data)
+    assert b"log in" in rv.data
+
