@@ -101,7 +101,7 @@ def test_search_functionality(client):
     assert b"<strong>HTML</strong> allowed here" in rv.data
     """Search for messages"""
     rv = client.get("/search/?query=one", content_type="html/text")
-    assert rv.status_code == 200
+    assert b"&lt;One&gt;" in rv.data
     """logs out and then checks if it exists"""
     logout(client)
     rv = client.get("/search/?query=one", content_type="html/text")
